@@ -1,9 +1,12 @@
+##############################################################################################
+####################### PYTHON PACKAGES ######################################################
+##############################################################################################
 import pandas as pd 
 import numpy as np
 
-###############################################
-####### CONSTANT and CONVERSION CONSTAN #######
-###############################################
+##############################################################################################
+####### CONSTANT and CONVERSION CONSTAN ######################################################
+##############################################################################################
 KB 			= 1.3806488e-23 #boltzman constant
 H  			= 6.62606957e-34 #plank constant
 C  			= 2.99792458e10 #light speed
@@ -18,12 +21,12 @@ kJmoltoK   	= 120.2731159571
 MHZtoK     	= 6.62606957 / 1.3806488 * 1e-5 # e-34 * 1e6 / e-23
 AUconv     	= 1.66053886 * 1.3806488 / 6.62606957 / 6.62606957 * 1e18 # AMUtoKG * KB / H / H
 UMAAAtoKGM 	= 1.660539e-47
-###############################################
-###############################################
+##############################################################################################
+##############################################################################################
 
-###############################################
-################## FUNCTIONS ##################
-###############################################
+##############################################################################################
+################## FUNCTIONS #################################################################
+##############################################################################################
 
 def read_freq_gaussian(name_out):
 	"""
@@ -135,19 +138,18 @@ def e_vib(t,freq,ZPE):
 	elif ZPE == False:
 		return np.sum(freq * CMtokJmol / (np.exp(freq * CMtoK / t) - 1)) 
 
-def BH_t(t,freq_m,freq_s,freq_c,be,be_zpe):
+def BH_t(t,freq_m,freq_s,freq_c,be_zpe):
 	"""
-	BH(0) (i.e. BE with ZPE correction) corrected for thermal contribution
+	Thermal correction to the BE
 	t: Temperature in K
 	freq in cm-1
 	freq_m: desorbed molecule freq
 	freq_s: surface after desorbed molecule freq
 	freq_c: complex (mol+ surf) freq
-	be: binding energy in kJ/mol
-	be_zpe: if set to True the BE is not corrected for ZPE, if set to False is corrected for the ZPE (i.e. BH(0))
+	be_zpe: if set to True the the correction do not considered ZPE, if set to False ZPE is corrected
 	energy output is in kJ/mol
 	"""
-	return be + e_vib(t,freq_m,be_zpe) + e_vib(t,freq_s,be_zpe) - e_vib(t,freq_c,be_zpe) + 4 * R * t * 1e-3
+	return e_vib(t,freq_m,be_zpe) + e_vib(t,freq_s,be_zpe) - e_vib(t,freq_c,be_zpe) + 4 * R * t * 1e-3
 
 def pre_factor_HH(m,a,bh):
 	"""
@@ -201,5 +203,5 @@ def RH_DesRate(t,prefactor,be):
 	"""
 	return  prefactor * np.exp( - be * kJmoltoK / t)
 
-###############################################
-###############################################
+##############################################################################################
+##############################################################################################
