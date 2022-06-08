@@ -12,7 +12,9 @@ This program used a python3 interface, to run this code you must install on your
 * ```matplotlib```
 
 ## Script Structure
-All the code is inside the ```TPD_BE_examples_scipts.ipynb``` ipython notebook
+The presentation of all the funciton and code are inside the ```TPD_BE_examples_scipts.ipynb``` ipython notebook.
+
+Inside the ```lib.py``` file are present all the functions.
 
 ## Associated publications
 Please reffer to the following publication to cite our work or retrieve the info:
