@@ -30,8 +30,8 @@ UMAAAtoKGM 	= 1.660539e-47
 
 def read_freq_gaussian(name_out):
 	"""
-	Read freq from g98.out file, and give back the freq in 1D np.array in cm-1
-	name_out: g98.out file name/path
+	Read freq from g98.log file, and give back the freq in 1D np.array in cm-1
+	name_out: g98.log file name/path
 	"""
 	freq = []
 	with open(name_out,"r") as data:
@@ -86,6 +86,14 @@ def kooji(t,alpha,beta,gamma):
 	alpha, beta and gamma: the parameters in K
 	"""
 	return  alpha * (t / 300) ** beta * np.exp( - gamma / t)
+
+def tpd_peak_kooji(T):
+	"""
+	Function for TPD peak with Desorption rate encoded as Arrehnius-kooji equation
+	t: Temperature in K
+	alpha, beta and gamma: the parameters in K
+	"""
+	return  nu * T + gamma - 1 / beta * T * T * alpha * (T / 300) ** nu * np.exp( - gamma / T)
 
 def lamda_trasl(t,m):
 	"""
@@ -174,7 +182,7 @@ def pre_factor_tait(t,m,a,sim,Rot_info,rot_unit):
 	qrot 	= q_rot(t,Rot_info,sim,rot_unit)
 	return KB * t / H * a / lmd / lmd * 1 * qrot
 
-def pre_factor_harm(t,m,a,sim,Rot_info,rot_unit,freq_ts_mol,freq_ts_cluster,freq_ads):
+def pre_factor_harm(t,m,a,sim,Rot_info,rot_unit,freq_ts_mol,freq_ts_surface,freq_complex):
 	"""
 	prefactor using vibrational partition function in harmoni approximation in s-1
 	t: Temperature in K
@@ -184,14 +192,14 @@ def pre_factor_harm(t,m,a,sim,Rot_info,rot_unit,freq_ts_mol,freq_ts_cluster,freq
 	Rot_info: inertial axis in amu * A**2
 	rot_unit: if set to TRUE Rot_info must be the rotational constant in cm-1 (if in Mhz change CMtoK to MHZtoK), if set tu FALSE Rot_info must be the inertial axis in amu * A**2
 	freq_ts_mol: freq in cm-1 for the gas phase absorbate molecule
-	freq_ts_cluster: freq in cm-1 for cluster reference
-	freq_ads: freq in cm-1 for the complex (adsorbed molecules + cluster)
+	freq_ts_surface: freq in cm-1 for cluster reference
+	freq_complex: freq in cm-1 for the complex (adsorbed molecules + cluster)
 	"""
 	qtrl 			= q_trasl_2d(t,m,a)
 	qrot 			= q_rot(t,Rot_info,sim,rot_unit)
 	qvib_ts_mol 	= q_vib(t,freq_ts_mol)
-	qvib_ts_cluster = q_vib(t,freq_ts_cluster)
-	qvib_ts_ads 	= q_vib(t,freq_ads)
+	qvib_ts_cluster = q_vib(t,freq_ts_surface)
+	qvib_ts_ads 	= q_vib(t,freq_complex)
 	return KB * t / H * qrot * qtrl * qvib_ts_mol * qvib_ts_cluster / qvib_ts_ads
 
 def RH_DesRate(t,prefactor,be):
