@@ -14,7 +14,9 @@ This program used a python3 interface, to run this code you must install on your
 ## Script Structure
 The presentation of all the funciton and code are inside the ```TPD_BE_examples_scipts.ipynb``` ipython notebook.
 
-Inside the ```lib.py``` file are present all the functions.
+The TPD script is the ```TPD.py``` file.
+
+Inside the ```lib.py``` file are present all the functions. If you want to ran the ```TPD_BE_examples_scipts.ipynb``` or ```TPD.py``` files on your PC you need to have the ```lib.py``` file in the same directory were you ranning the codes.
 
 ## Associated publications
 Please reffer to the following publication to cite our work or retrieve the info:
