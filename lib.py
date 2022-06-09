@@ -83,7 +83,7 @@ def kooji(t,alpha,beta,gamma):
 	"""
 	Arrehnius-kooji equation
 	t: Temperature in K
-	alpha, beta and gamma: the parameters in K
+	alpha, beta and gamma: the parameters are respectivetly in s-1, K and K
 	"""
 	return  alpha * (t / 300) ** beta * np.exp( - gamma / t)
 
