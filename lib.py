@@ -16,11 +16,12 @@ EhtokJmol  	= 2625.5002
 AMUtoKG    	= 1.66053886e-27
 CMtokJmol  	= 1.1962659192089765e-2 #C * H * AV change due to numerical errors
 CMtoK      	= 1.4387862961655296
+CMtoHz		= 2.99792458e+10
 kjtokcal   	= 4.184
 kJmoltoK   	= 120.2731159571
 MHZtoK     	= 6.62606957 / 1.3806488 * 1e-5 # e-34 * 1e6 / e-23
 AUconv     	= 1.66053886 * 1.3806488 / 6.62606957 / 6.62606957 * 1e18 # AMUtoKG * KB / H / H
-UMAAAtoKGM 	= 1.660539e-47
+UMAAAtoKGMM = 1.660539e-47
 ##############################################################################################
 ##############################################################################################
 
@@ -123,7 +124,56 @@ def q_rot(t,Rot_info,sim,rot_unit):
 	if rot_unit == True:
 		return np.sqrt(np.pi) * np.sqrt(np.prod(np.array(Rot_info) * CMtoK * t)) / sim
 	elif rot_unit == False:
-		return np.sqrt(np.pi) / sim * np.power(8 * np.pi * np.pi * KB * t,1.5) * np.sqrt(np.prod(np.array(Rot_info) * UMAAAtoKGM )) / H / H / H
+		return np.sqrt(np.pi) / sim * np.power(8 * np.pi * np.pi * KB * t,1.5) * np.sqrt(np.prod(np.array(Rot_info) * UMAAAtoKGMM )) / H / H / H
+
+def q_vib_quasi_RRHO(t,freq,cutoff,Rot_info):
+	"""
+	vibrational partition function starting from level 1
+	t: Temperature in K
+	freq in cm-1
+	cutoff: freq smaller then cutoff will be trheated as quasi-RRHO if bigger RRHO, units in cm-1
+	Rot_info: rotational constant in amu * A**2
+	sim: degeneracy in simmetry rotation
+	"""
+	tmp_vib = 1 /(1 - np.exp(- freq * CMtoK / t))
+	I_av = np.mean(np.array(Rot_info) * UMAAAtoKGMM)
+	mu = H / 8 / np.pi / np.pi / (freq * CMtoHz)
+	tmp_rot = np.sqrt(8 * np.pi * np.pi * KB * t * mu * I_av / (mu + I_av)) / H
+	omega = 1 / (1 + np.power(cutoff / freq,4))
+	#if t == 100:
+	#	print(freq,tmp_vib,tmp_rot,omega)
+	return np.prod(omega * tmp_vib + (1 - omega) * tmp_rot)
+
+def q_vib_quasi_RRHO_T(t,freq,V):
+	"""
+	vibrational partition function starting from level 1
+	t: Temperature in K
+	freq in cm-1
+	V: rotational barrier in kJ/mol
+	Rot_info: rotational constant in amu * A**2
+	sim: degeneracy in simmetry rotation
+	"""
+	tmp_vib = 1 / (1 - np.exp(- freq * CMtoK / t))
+	#if t == 100:
+	#	print(freq,tmp_vib,tmp_rot,omega)
+	return np.prod(tmp_vib * np.tanh(np.sqrt(np.pi * V * kJmoltoK / t )))
+
+def q_vib_quasi_RRHO_T_mod(t,freq,V,cutoff):
+	"""
+	vibrational partition function starting from level 1
+	t: Temperature in K
+	freq in cm-1
+	V: rotational barrier in kJ/mol
+	Rot_info: rotational constant in amu * A**2
+	sim: degeneracy in simmetry rotation
+	"""
+	tmp_vib = 1 / (1 - np.exp(- freq * CMtoK / t))
+	tmp_vib = 1 /(1 - np.exp(- freq * CMtoK / t))
+	#I_av = np.mean(np.array(Rot_info) * UMAAAtoKGMM)
+	#mu = H / 8 / np.pi / np.pi / (freq * CMtoHz)
+	#tmp_rot = np.sqrt(8 * np.pi * np.pi * KB * t * mu * I_av / (mu + I_av)) / H
+	omega = 1 / (1 + np.power(cutoff / freq,4))
+	return np.prod(omega * tmp_vib + (1 - omega) * tmp_vib * np.tanh(np.sqrt(np.pi * V * kJmoltoK / t )))
 
 def q_vib(t,freq):
 	"""
@@ -146,6 +196,20 @@ def e_vib(t,freq,ZPE):
 	elif ZPE == False:
 		return np.sum(freq * CMtokJmol / (np.exp(freq * CMtoK / t) - 1)) 
 
+def e_vib_quasi_RRHO(t,freq,cutoff,ZPE):
+	"""
+	vibrational internal energy with and without ZPE
+	t: Temperature in K
+	freq in cm-1
+	cutoff: freq smaller then cutoff will be trheated as quasi-RRHO if bigger RRHO
+	ZPE: id set to True computed also the ZPE, if set to False not computed the ZPE
+	energy output is in kJ/mol
+	"""
+	if ZPE == True:
+		return np.sum(freq * CMtokJmol * (0.5 + 1 / (1 + np.power(cutoff * CMtokJmol / (freq * CMtokJmol),4)) / (np.exp(freq * CMtoK / t) - 1)) + (1 - 1 / (1 + np.power(cutoff * CMtokJmol / (freq * CMtokJmol),4))) * R * t * 0.5 * 1e-3)
+	elif ZPE == False:
+		return np.sum(freq * CMtokJmol * (1 / (1 + np.power(cutoff * CMtokJmol / (freq * CMtokJmol),4)) / (np.exp(freq * CMtoK / t) - 1)) + (1 - 1 / (1 + np.power(cutoff * CMtokJmol / (freq * CMtokJmol),4))) * R * t * 0.5 * 1e-3)
+
 def BH_t(t,freq_m,freq_s,freq_c,be_zpe):
 	"""
 	Thermal correction to the BE
@@ -158,6 +222,20 @@ def BH_t(t,freq_m,freq_s,freq_c,be_zpe):
 	energy output is in kJ/mol
 	"""
 	return e_vib(t,freq_m,be_zpe) + e_vib(t,freq_s,be_zpe) - e_vib(t,freq_c,be_zpe) + 4 * R * t * 1e-3
+
+def BH_t_quasi_RRHO(t,freq_m,freq_s,freq_c,cutoff,be_zpe):
+	"""
+	Thermal correction to the BE
+	t: Temperature in K
+	freq in cm-1
+	freq_m: desorbed molecule freq
+	freq_s: surface after desorbed molecule freq
+	freq_c: complex (mol+ surf) freq
+	cutoff: freq smaller then cutoff will be trheated as quasi-RRHO if bigger RRHO
+	be_zpe: if set to True the the correction do not considered ZPE, if set to False ZPE is corrected
+	energy output is in kJ/mol
+	"""
+	return e_vib_quasi_RRHO(t,freq_m,cutoff,be_zpe) + e_vib_quasi_RRHO(t,freq_s,cutoff,be_zpe) - e_vib_quasi_RRHO(t,freq_c,cutoff,be_zpe) + 4 * R * t * 1e-3
 
 def pre_factor_HH(m,a,bh):
 	"""
